@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+  </style>
+</helmet>
+
+<div style="min-height: 100vh; background: #0d0c0b; display: flex; justify-content: center; align-items: center; padding: 52px 28px; font-family: 'Space Grotesk', system-ui, sans-serif; color: #ede8e0;">
+  <div style="width: 100%; max-width: 400px;">
+
+    <!-- ── SETUP ── -->
+    <sc-if value="{{ isSetup }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <p style="margin: 0 0 18px; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #58524c;">Social Deduction</p>
+        <h1 style="margin: 0 0 22px; font-size: 52px; font-weight: 700; letter-spacing: -0.035em; line-height: 0.97; color: #ede8e0;">Two-Player<br>Imposter</h1>
+        <p style="margin: 0 0 56px; font-size: 15px; line-height: 1.7; color: #7a7268; text-wrap: pretty; max-width: 320px;">Pass the device between players. Each checks their word in secret — but one of you might be describing something entirely different.</p>
+
+        <div style="display: flex; flex-direction: column; gap: 40px; margin-bottom: 48px;">
+          <div>
+            <p style="margin: 0 0 10px; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #58524c;">Rounds</p>
+            <input type="number" value="{{ roundsInput }}" onChange="{{ onRoundsChange }}" min="1" max="10"
+              style="width: 100%; background: transparent; border: none; border-bottom: 1px solid #2e2a27; color: #ede8e0; font-family: inherit; font-size: 40px; font-weight: 700; letter-spacing: -0.03em; padding: 4px 0 14px; outline: none; display: block;">
+          </div>
+          <div>
+            <p style="margin: 0 0 14px; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #58524c;">Imposter Chance</p>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <sc-for list="{{ chanceOpts }}" as="opt" hint-placeholder-count="4">
+                <button onClick="{{ opt.onPick }}" style="{{ opt.style }}" style-hover="opacity: 0.72;">{{ opt.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <button onClick="{{ onStart }}"
+          style="width: 100%; padding: 18px 24px; background: #ede8e0; color: #0d0c0b; font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; border: none; cursor: pointer; display: block;"
+          style-hover="background: #ddd8d0;">
+          Start Game →
+        </button>
+      </div>
+    </sc-if>
+
+    <!-- ── PLAYER CARD ── -->
+    <sc-if value="{{ isPlayerCard }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align: center;">
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 56px;">
+          <div style="flex: 1; height: 1px; background: #1e1c1a;"></div>
+          <p style="margin: 0; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #58524c; white-space: nowrap;">Player {{ curPlayer }} — Eyes Only</p>
+          <div style="flex: 1; height: 1px; background: #1e1c1a;"></div>
+        </div>
+
+        <p style="margin: 0 0 6px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #58524c;">Category</p>
+        <p style="margin: 0 0 48px; font-size: 22px; font-weight: 600; letter-spacing: -0.01em;">{{ category }}</p>
+
+        <p style="margin: 0 0 16px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #58524c;">Your word</p>
+        <p style="margin: 0 0 52px; font-size: 66px; font-weight: 700; letter-spacing: -0.035em; line-height: 0.95; word-break: break-word; text-transform: lowercase;">{{ curWord }}</p>
+
+        <div style="margin-bottom: 56px;">
+          <div style="{{ roleStyle }}">{{ roleText }}</div>
+        </div>
+
+        <button onClick="{{ onHideCard }}"
+          style="width: 100%; padding: 18px 24px; background: transparent; color: #ede8e0; font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; border: 1px solid #2e2a27; cursor: pointer;"
+          style-hover="background: #161412; border-color: #3e3a37;">
+          Hide Card
+        </button>
+      </div>
+    </sc-if>
+
+    <!-- ── PASS DEVICE ── -->
+    <sc-if value="{{ isPass }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align: center; padding: 20px 0;">
+        <p style="margin: 0 0 8px; font-size: 13px; color: #58524c; letter-spacing: 0.06em;">Pass the device to</p>
+        <p style="margin: 0 0 48px; font-size: 88px; font-weight: 700; letter-spacing: -0.045em; line-height: 0.92; color: #ede8e0;">Player<br>2</p>
+        <p style="margin: 0 0 60px; font-size: 15px; color: #7a7268; line-height: 1.65;">Player 1, look away while<br>Player 2 checks their card.</p>
+
+        <button onClick="{{ onShowP2 }}"
+          style="width: 100%; padding: 18px 24px; background: #ede8e0; color: #0d0c0b; font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; border: none; cursor: pointer;"
+          style-hover="background: #ddd8d0;">
+          Show Player 2 →
+        </button>
+      </div>
+    </sc-if>
+
+    <!-- ── ROUNDS ── -->
+    <sc-if value="{{ isRounds }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <p style="margin: 0 0 14px; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #58524c;">Game On</p>
+        <p style="margin: 0 0 10px; font-size: 48px; font-weight: 700; letter-spacing: -0.035em; line-height: 0.95;">{{ category }}</p>
+        <p style="margin: 0 0 44px; font-size: 15px; color: #7a7268; line-height: 1.6;">{{ rounds }} rounds — describe your word without saying it directly.</p>
+
+        <div style="border-top: 1px solid #1e1c1a; margin-bottom: 48px;">
+          <sc-for list="{{ roundsList }}" as="round" hint-placeholder-count="3">
+            <div style="display: flex; align-items: baseline; gap: 20px; padding: 15px 0; border-bottom: 1px solid #181614;">
+              <span style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #58524c; min-width: 62px; flex-shrink: 0;">Round {{ round.num }}</span>
+              <span style="font-size: 14px; color: #7a7268;">Player 1 describes → Player 2 describes</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <button onClick="{{ onVote }}"
+          style="width: 100%; padding: 18px 24px; background: #ede8e0; color: #0d0c0b; font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; border: none; cursor: pointer;"
+          style-hover="background: #ddd8d0;">
+          Vote →
+        </button>
+      </div>
+    </sc-if>
+
+    <!-- ── VOTE ── -->
+    <sc-if value="{{ isVote }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <p style="margin: 0 0 16px; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #58524c;">Final Vote</p>
+        <h2 style="margin: 0 0 48px; font-size: 44px; font-weight: 700; letter-spacing: -0.03em; line-height: 0.97;">Who is the<br>imposter?</h2>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button onClick="{{ onVoteP1 }}"
+            style="width: 100%; padding: 22px 24px; background: #161412; color: #ede8e0; font-family: inherit; font-size: 17px; font-weight: 600; letter-spacing: 0.02em; border: 1px solid #242220; cursor: pointer; text-align: left;"
+            style-hover="background: #201e1b; border-color: #3a3632;">
+            Player 1
+          </button>
+          <button onClick="{{ onVoteP2 }}"
+            style="width: 100%; padding: 22px 24px; background: #161412; color: #ede8e0; font-family: inherit; font-size: 17px; font-weight: 600; letter-spacing: 0.02em; border: 1px solid #242220; cursor: pointer; text-align: left;"
+            style-hover="background: #201e1b; border-color: #3a3632;">
+            Player 2
+          </button>
+          <button onClick="{{ onVoteNone }}"
+            style="width: 100%; padding: 18px 24px; background: transparent; color: #6a6258; font-family: inherit; font-size: 15px; font-weight: 500; letter-spacing: 0.01em; border: 1px solid #1c1a18; cursor: pointer; text-align: left;"
+            style-hover="background: #161412; color: #ede8e0; border-color: #242220;">
+            No imposter
+          </button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ── REVEAL ── -->
+    <sc-if value="{{ isReveal }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <p style="margin: 0 0 12px; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #58524c;">Result</p>
+        <p style="{{ resultStyle }}">{{ resultLabel }}</p>
+        <p style="margin: 0 0 52px; font-size: 16px; color: #7a7268; line-height: 1.55;">{{ resultSub }}</p>
+
+        <div style="border-top: 1px solid #1e1c1a; padding-top: 32px; margin-bottom: 48px; display: flex; flex-direction: column; gap: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <span style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #58524c; white-space: nowrap;">Category</span>
+            <span style="font-size: 16px; font-weight: 600;">{{ category }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <span style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #58524c; white-space: nowrap;">Normal word</span>
+            <span style="font-size: 16px; font-weight: 600;">{{ normalWord }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <span style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #58524c; white-space: nowrap;">Imposter</span>
+            <span style="font-size: 16px; font-weight: 600;">{{ imposterLabel }}</span>
+          </div>
+          <sc-if value="{{ hasImposter }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <span style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #58524c; white-space: nowrap;">Imposter word</span>
+              <span style="font-size: 16px; font-weight: 700; color: #d44040;">{{ imposterWord }}</span>
+            </div>
+          </sc-if>
+        </div>
+
+        <button onClick="{{ onPlayAgain }}"
+          style="width: 100%; padding: 18px 24px; background: #ede8e0; color: #0d0c0b; font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; border: none; cursor: pointer; display: block;"
+          style-hover="background: #ddd8d0;">
+          Play Again
+        </button>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const WORD_PACKS = [
+  { category: "Fast Food",       words: ["burger", "sandwich", "hot dog", "taco"] },
+  { category: "Sports",          words: ["basketball", "soccer", "football", "lacrosse"] },
+  { category: "School Subjects", words: ["math", "physics", "chemistry", "biology"] },
+  { category: "Animals",         words: ["lion", "tiger", "cheetah", "leopard"] },
+  { category: "Technology",      words: ["laptop", "tablet", "phone", "desktop"] },
+  { category: "Drinks",          words: ["coffee", "tea", "hot chocolate", "latte"] },
+  { category: "Places",          words: ["beach", "lake", "pool", "water park"] },
+  { category: "Vehicles",        words: ["car", "truck", "SUV", "van"] }
+];
+
+const CHANCE_DEFS = [
+  { label: "50%",    val: 0.5  },
+  { label: "70%",    val: 0.7  },
+  { label: "Always", val: 1.0  },
+  { label: "Never",  val: 0.0  },
+];
+
+const CHIP_BASE = {
+  padding: "9px 18px",
+  fontFamily: "inherit",
+  fontSize: "13px",
+  fontWeight: "600",
+  letterSpacing: "0.04em",
+  cursor: "pointer",
+  borderRadius: "0",
+};
+
+class Component extends DCLogic {
+  state = {
+    phase: "setup",
+    roundsInput: 3,
+    chanceInput: 0.70,
+    game: {},
+    voteResult: null,
+  };
+
+  pick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  startGame() {
+    const { roundsInput, chanceInput } = this.state;
+    const pack = this.pick(WORD_PACKS);
+    const normalWord = this.pick(pack.words);
+    let imposterWord = this.pick(pack.words);
+    while (imposterWord === normalWord) imposterWord = this.pick(pack.words);
+    const hasImposter = Math.random() < chanceInput;
+    const imposterPlayer = hasImposter ? this.pick([1, 2]) : 0;
+    this.setState({
+      phase: "player1",
+      game: { category: pack.category, normalWord, imposterWord, hasImposter, imposterPlayer, rounds: roundsInput },
+    });
+  }
+
+  vote(choice) {
+    const { game } = this.state;
+    const correct = game.hasImposter ? choice === game.imposterPlayer : choice === 0;
+    this.setState({ phase: "reveal", voteResult: correct ? "correct" : "wrong" });
+  }
+
+  renderVals() {
+    const { phase, roundsInput, chanceInput, game, voteResult } = this.state;
+    const isPlayer1 = phase === "player1";
+    const isPlayer2 = phase === "player2";
+    const isPlayerCard = isPlayer1 || isPlayer2;
+    const curPlayer = isPlayer2 ? 2 : 1;
+    const p1Imp = game.hasImposter && game.imposterPlayer === 1;
+    const p2Imp = game.hasImposter && game.imposterPlayer === 2;
+    const curImp = curPlayer === 1 ? p1Imp : p2Imp;
+    const curWord = curImp ? (game.imposterWord || "") : (game.normalWord || "");
+    const correct = voteResult === "correct";
+
+    return {
+      // Phase flags
+      isSetup:      phase === "setup",
+      isPlayerCard,
+      isPass:       phase === "pass",
+      isRounds:     phase === "rounds",
+      isVote:       phase === "vote",
+      isReveal:     phase === "reveal",
+
+      // Setup
+      roundsInput,
+      chanceOpts: CHANCE_DEFS.map(o => {
+        const active = Math.abs(chanceInput - o.val) < 0.01;
+        return {
+          label: o.label,
+          onPick: () => this.setState({ chanceInput: o.val }),
+          style: {
+            ...CHIP_BASE,
+            border: `1px solid ${active ? "#ede8e0" : "#302c29"}`,
+            background: active ? "#ede8e0" : "transparent",
+            color: active ? "#0d0c0b" : "#8a8278",
+          },
+        };
+      }),
+      onRoundsChange: e => this.setState({ roundsInput: Math.max(1, Math.min(10, Number(e.target.value))) }),
+      onStart: () => this.startGame(),
+
+      // Player card
+      curPlayer,
+      category: game.category || "",
+      curWord,
+      roleStyle: {
+        display: "inline-block",
+        padding: "8px 24px",
+        fontSize: "11px",
+        fontWeight: "700",
+        letterSpacing: "0.2em",
+        textTransform: "uppercase",
+        background: curImp ? "rgba(212,64,64,0.10)" : "rgba(60,195,130,0.08)",
+        color:      curImp ? "#d44040"               : "#3cc382",
+        border:     `1px solid ${curImp ? "rgba(212,64,64,0.22)" : "rgba(60,195,130,0.18)"}`,
+      },
+      roleText: curImp ? "Imposter" : "Safe",
+      onHideCard: () => this.setState({ phase: isPlayer1 ? "pass" : "rounds" }),
+
+      // Pass
+      onShowP2: () => this.setState({ phase: "player2" }),
+
+      // Rounds
+      rounds: game.rounds || 0,
+      roundsList: Array.from({ length: game.rounds || 0 }, (_, i) => ({ num: i + 1 })),
+      onVote: () => this.setState({ phase: "vote" }),
+
+      // Vote
+      onVoteP1:   () => this.vote(1),
+      onVoteP2:   () => this.vote(2),
+      onVoteNone: () => this.vote(0),
+
+      // Reveal
+      resultStyle: {
+        margin: "0 0 8px",
+        fontSize: "60px",
+        fontWeight: "700",
+        letterSpacing: "-0.04em",
+        lineHeight: "1",
+        color: correct ? "#3cc382" : "#d44040",
+      },
+      resultLabel: correct ? "Correct." : "Wrong.",
+      resultSub: correct
+        ? (game.hasImposter ? "The normal player wins." : "No imposter was hiding.")
+        : (game.hasImposter ? "The imposter wins."      : "An innocent was accused."),
+      hasImposter:   game.hasImposter,
+      normalWord:    game.normalWord    || "",
+      imposterWord:  game.imposterWord  || "",
+      imposterLabel: game.hasImposter ? `Player ${game.imposterPlayer}` : "None",
+      onPlayAgain: () => this.setState({ phase: "setup", game: {}, voteResult: null }),
+    };
+  }
+}
+</script>
+</body>
+</html>
